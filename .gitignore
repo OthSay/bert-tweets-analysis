@@ -19,6 +19,8 @@ lib64/
 parts/
 sdist/
 var/
+data/aclImdb/test
+data/aclImdb/train
 wheels/
 pip-wheel-metadata/
 share/python-wheels/
