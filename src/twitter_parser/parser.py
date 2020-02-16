@@ -11,12 +11,12 @@ class TwitterParser:
                  access_token,
                  access_token_secret):
 
+        self.logger = logging.getLogger()
         self.api_key = api_key
         self.api_secret_key = api_secret_key
         self.access_token = access_token
         self.access_token_secret = access_token_secret
         self.twitter_api = self._create_api()
-        self.logger = logging.getLogger()
 
     def _create_api(self):
 
