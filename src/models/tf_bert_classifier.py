@@ -29,7 +29,7 @@ class TFBertClassifier:
         processor.add_examples(texts_or_text_and_labels=x,
                                labels=y)
 
-        features = processor.get_features(tokenizer=self.tokenizer)
+        features = processor.get_features(tokenizer=self.tokenizer, return_tensors="tf")
 
         if shuffle:
             features.shuffle(100)
