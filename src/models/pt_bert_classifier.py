@@ -19,12 +19,12 @@ class PTBertClassifier:
 
     def __init__(self,
                  num_classes,
-                 model_name='bert-base-uncased'
+                 tokenizer=BertTokenizer.from_pretrained("bert-base-uncased"),
+                 transf_model=BertForSequenceClassification.from_pretrained("bert-base-uncased")
                  ):
         self.num_classes = num_classes
-        self.tokenizer = BertTokenizer.from_pretrained(model_name)
-        self.model = BertForSequenceClassification.from_pretrained(model_name,
-                                                                    num_labels=self.num_classes)
+        self.tokenizer = tokenizer
+        self.model = transf_model
 
     def get_features(self,
                      x,
