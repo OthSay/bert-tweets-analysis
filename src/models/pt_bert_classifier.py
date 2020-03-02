@@ -51,8 +51,8 @@ class PTBertClassifier:
                                                               y,
                                                               train_size=val_split)
 
-        train_features=self.get_features(x=x_train, y=y_train)
-        valid_features=self.get_features(x=x_valid, y=y_valid)
+        train_features = self.get_features(x=x_train, y=y_train)
+        valid_features = self.get_features(x=x_valid, y=y_valid)
 
         train_input_ids = torch.tensor(np.array(train_features[:][0]))
         train_input_mask = torch.tensor(np.array(train_features[:][1]))
@@ -121,7 +121,6 @@ class PTBertClassifier:
 
     def predict(self, text):
         feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
-        prediction = self.model(feature['input_ids'].cuda(), feature['attention_mask'].cuda())[
+        prediction = self.model(feature['input_ids'], feature['attention_mask'])[
             0].detach().cpu().numpy()
-
         return prediction

@@ -16,6 +16,14 @@ def accuracy_thresh(y_pred, y_true, thresh: float = 0.5, sigmoid: bool = True):
     return np.mean(np.mean(((y_pred > thresh) == y_true.byte()).float().cpu().numpy(), axis=1))
 
 
+label_map = {0: 'toxic',
+             1: 'severe_toxic',
+             2: 'obscene',
+             3: 'threat',
+             4: 'insult',
+             5: 'identity_hate'}
+
+
 class MultiLabelClassifier:
 
     def __init__(self,
@@ -123,9 +131,12 @@ class MultiLabelClassifier:
 
         torch.save(self.model, model_save_path)
 
-    def predict(self, text):
+    def predict(self, text, thresh=0.5):
 
         feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
-        prediction = self.model(feature['input_ids'].cuda(), feature['attention_mask'].cuda())[0].detach().cpu().sigmoid()
+        prediction = self.model(feature['input_ids'], feature['attention_mask'])[0].detach().cpu().sigmoid()
 
-        return prediction
+        preds = (prediction > thresh).byte().numpy()
+        pred_idx = np.where(preds[0] == 1)[0]
+
+        return [label_map[idx] for idx in pred_idx]
