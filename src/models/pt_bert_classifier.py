@@ -118,3 +118,10 @@ class PTBertClassifier:
                 (e, train_loss, val_loss, acc, f1))
 
             torch.cuda.empty_cache()
+
+    def predict(self, text):
+        feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
+        prediction = self.model(feature['input_ids'].cuda(), feature['attention_mask'].cuda())[
+            0].detach().cpu().numpy()
+
+        return prediction

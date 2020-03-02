@@ -1,8 +1,11 @@
 import tensorflow as tf
 import torch
-from transformers.data.processors import DataProcessor
-import numpy as np
+from transformers.data.processors import DataProcessor, InputFeatures, InputExample
+from torch.utils.data import TensorDataset
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class MultiLabelClassificationProcessor(DataProcessor):
@@ -19,7 +22,7 @@ class MultiLabelClassificationProcessor(DataProcessor):
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
-            return SingleSentenceClassificationProcessor(labels=self.labels, examples=self.examples[idx])
+            return MultiLabelClassificationProcessor(labels=self.labels, examples=self.examples[idx])
         return self.examples[idx]
 
     @classmethod
@@ -204,10 +207,6 @@ class MultiLabelClassificationProcessor(DataProcessor):
         if return_tensors is None:
             return features
         elif return_tensors == "tf":
-            if not is_tf_available():
-                raise RuntimeError("return_tensors set to 'tf' but TensorFlow 2.0 can't be imported")
-            import tensorflow as tf
-
             def gen():
                 for ex in features:
                     yield ({"input_ids": ex.input_ids, "attention_mask": ex.attention_mask}, ex.label)
@@ -219,10 +218,6 @@ class MultiLabelClassificationProcessor(DataProcessor):
             )
             return dataset
         elif return_tensors == "pt":
-            if not is_torch_available():
-                raise RuntimeError("return_tensors set to 'pt' but PyTorch can't be imported")
-            import torch
-            from torch.utils.data import TensorDataset
 
             all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
             all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)

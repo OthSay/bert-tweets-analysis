@@ -122,3 +122,10 @@ class MultiLabelClassifier:
             torch.cuda.empty_cache()
 
         torch.save(self.model, model_save_path)
+
+    def predict(self, text):
+
+        feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
+        prediction = self.model(feature['input_ids'].cuda(), feature['attention_mask'].cuda())[0].detach().cpu().sigmoid()
+
+        return prediction
