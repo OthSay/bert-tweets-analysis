@@ -40,8 +40,8 @@ class TwitterParser:
                    count=100,
                    tweet_mode="extended"):
 
-        tweets = self.twitter_api.search(q=query, count=count, tweet_mode=tweet_mode)
-        return [tweet.full_text for tweet in tweets]
+        cursor = tweepy.Cursor(self.twitter_api.search, q=query, tweet_mode=tweet_mode)
+        return [tweet.full_text for tweet in cursor.items(count)]
 
     def dump_tweets(self,
                     query,
