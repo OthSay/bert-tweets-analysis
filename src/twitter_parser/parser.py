@@ -38,10 +38,24 @@ class TwitterParser:
     def get_tweets(self,
                    query,
                    count=100,
-                   tweet_mode="extended"):
+                   tweet_mode="extended",
+                   lang="en",
+                   filter_rt=True):
 
-        cursor = tweepy.Cursor(self.twitter_api.search, q=query, tweet_mode=tweet_mode)
-        return [tweet.full_text for tweet in cursor.items(count)]
+        if filter_rt:
+            query += " -filter:retweets"
+        cursor = tweepy.Cursor(self.twitter_api.search,
+                               q=query,
+                               tweet_mode=tweet_mode,
+                               lang=lang)
+        tweets_list = []
+        for tweet in cursor.items(count):
+            try:
+                tweets_list.append(tweet.retweeted_status.full_text)
+            except AttributeError:  # Not a Retweet
+                tweets_list.append(tweet.full_text)
+
+        return tweets_list
 
     def dump_tweets(self,
                     query,

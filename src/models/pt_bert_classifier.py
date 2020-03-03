@@ -1,7 +1,6 @@
 from sklearn.model_selection import train_test_split
 import torch
 import torch.nn.functional as F
-import torch.nn as nn
 from transformers import *
 import numpy as np
 import torch.optim as optim
@@ -122,5 +121,5 @@ class PTBertClassifier:
     def predict(self, text):
         feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
         prediction = self.model(feature['input_ids'], feature['attention_mask'])[
-            0].detach().cpu().numpy()
-        return prediction
+            0].detach().cpu()
+        return F.softmax(prediction)
