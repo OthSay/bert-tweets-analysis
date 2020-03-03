@@ -8,6 +8,7 @@ Created on Sun Feb 16 15:45:57 2020
 import torch
 import pandas as pd
 from tqdm import tqdm
+import numpy as np
 
 from src.twitter_parser import TwitterParser
 from textblob import TextBlob
@@ -36,17 +37,29 @@ multilabel_model = torch.load(model_path_2, map_location=torch.device('cpu'))
 classifier = PTBertClassifier(num_classes=2,transf_model =model)
 multi_classifier = MultiLabelClassifier(num_classes=6,transf_model =multilabel_model)
 
-query= "Virgin Galactic"
+query= "Bernie Sanders"
 tweets = twitter.get_tweets(query, count=1000)
-
 tweets_sentiments = []
 
+thresh = 0.9
 for tweet in tqdm(tweets):
     tweet_dict = {}
     tweet_dict["tweet"] = tweet
     testimonial = TextBlob(tweet)
     tweet_dict["blob_polarity"] = testimonial.sentiment.polarity
-    tweet_dict["BERT_sentiment"] = classifier.predict(tweet)
+    
+    preds = classifier.predict(tweet)
+    pred = (preds>thresh).byte().numpy()[0]
+    
+    if all(pred == np.array([0,0])):
+        sentiment = "neutral"
+    elif all(pred == np.array([1,0])):
+        sentiment = "positive"
+    else :
+        sentiment = "negative"
+        
+    tweet_dict["BERT_sentiment"] = sentiment
+    tweet_dict["BERT_sentiment_conf"]=preds.max().item()
     tweet_dict["toxicity_levels"] = multi_classifier.predict(tweet)
 
     tweets_sentiments.append(tweet_dict)
