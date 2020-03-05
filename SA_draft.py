@@ -37,7 +37,7 @@ multilabel_model = torch.load(model_path_2, map_location=torch.device('cpu'))
 classifier = PTBertClassifier(num_classes=2,transf_model =model)
 multi_classifier = MultiLabelClassifier(num_classes=6,transf_model =multilabel_model)
 
-query= "Bernie Sanders"
+query= "Donald Trump"
 tweets = twitter.get_tweets(query, count=1000)
 tweets_sentiments = []
 
@@ -65,4 +65,4 @@ for tweet in tqdm(tweets):
     tweets_sentiments.append(tweet_dict)
 
 
-df = pd.DataFrame(data=tweets_sentiments)
+df_trump = pd.DataFrame(data=tweets_sentiments)

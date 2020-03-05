@@ -57,6 +57,34 @@ class TwitterParser:
 
         return tweets_list
 
+    def get_tweets_by_batchs(self,
+                             query,
+                             batch_size=8,
+                             count=100,
+                             tweet_mode="extended",
+                             lang="en",
+                             filter_rt=True
+                             ):
+
+        if filter_rt:
+            query += " -filter:retweets"
+        cursor = tweepy.Cursor(self.twitter_api.search,
+                               q=query,
+                               tweet_mode=tweet_mode,
+                               lang=lang)
+        batch = []
+        for tweet in cursor.items(count):
+
+            if len(batch) < batch_size:
+                try:
+                    batch.append(tweet.retweeted_status.full_text)
+                except AttributeError:  # Not a Retweet
+                    batch.append(tweet.full_text)
+            elif len(batch) == batch_size:
+                batch_y = batch
+                batch = 0
+                yield batch_y
+
     def dump_tweets(self,
                     query,
                     save_path,

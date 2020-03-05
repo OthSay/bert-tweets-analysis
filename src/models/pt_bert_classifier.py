@@ -1,11 +1,13 @@
-from sklearn.model_selection import train_test_split
+import os
 import torch
+import numpy as np
+from tqdm import tqdm
+
+from sklearn.model_selection import train_test_split
 import torch.nn.functional as F
 from transformers import *
-import numpy as np
 import torch.optim as optim
 from sklearn.metrics import accuracy_score, f1_score
-from tqdm import tqdm
 
 
 def metric(y_true, y_pred):
@@ -43,7 +45,7 @@ class PTBertClassifier:
             lr=3e-5,
             batch_size=8,
             val_split=0.7,
-            model_save_path="weights_imdb.{epoch:02d}.hdf5"
+            model_save_path=None,
             ):
 
         x_train, x_valid, y_train, y_valid = train_test_split(x,
@@ -117,6 +119,9 @@ class PTBertClassifier:
                 (e, train_loss, val_loss, acc, f1))
 
             torch.cuda.empty_cache()
+
+        if model_save_path is not None:
+            torch.save(self.model, os.path.join(model_save_path, "model.bin"))
 
     def predict(self, text):
         feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
