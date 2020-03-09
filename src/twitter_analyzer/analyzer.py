@@ -1,14 +1,16 @@
+import os
 import torch
 import tweepy
 import pandas as pd
 import numpy as np
 from textblob import TextBlob
+from tqdm import tqdm
 
 from ..twitter_parser import TwitterParser
 from ..models import PTBertClassifier, MultiLabelClassifier
 
-DEFAULT_SA_MODEL_PATH = r"/Users/sayemothmane/Google Drive/project_x/model.bin"
-DEFAULT_TOX_MODEL_PATH = r"/Users/sayemothmane/Google Drive/project_x/model_toxicity_analysis.bin"
+DEFAULT_SA_MODEL_PATH = r"/Users/sayemothmane/ws/research/nlp/project_x/data/models/model.bin"
+DEFAULT_TOX_MODEL_PATH = r"/Users/sayemothmane/ws/research/nlp/project_x/data/models/model_toxicity_analysis.bin"
 THRESH = 0.9
 
 
@@ -27,17 +29,18 @@ class TweetsAnalyzer:
                                     access_token=self.access_token,
                                     access_token_secret=self.access_token_secret)
 
-        if config["models"]["sentiment-analysis"]["pretrained_model"]:
+        if os.path.isfile(config["models"]["sentiment-analysis"]["pretrained_model"]):
             self.sa_model_path = config["models"]["sentiment-analysis"]
         else:
             self.sa_model_path = DEFAULT_SA_MODEL_PATH
 
-        if config["models"]["toxicity-analysis"]["pretrained_model"]:
+        if os.path.isfile(config["models"]["toxicity-analysis"]["pretrained_model"]):
             self.tox_model_path = config["models"]["toxicity-analysis"]
         else:
             self.tox_model_path = DEFAULT_TOX_MODEL_PATH
 
-        self.sa_model = PTBertClassifier(transf_model=torch.load(DEFAULT_SA_MODEL_PATH,
+        self.sa_model = PTBertClassifier(num_classes=2,
+                                         transf_model=torch.load(DEFAULT_SA_MODEL_PATH,
                                                                  map_location=torch.device('cpu')))
 
         self.tox_model = MultiLabelClassifier(num_classes=6,
@@ -46,13 +49,18 @@ class TweetsAnalyzer:
 
     def analyze(self,
                 query,
-                count = 500):
+                count=500,
+                lang="en"):
 
         query += " -filter:retweets"
-        cursor = tweepy.Cursor(self.parser.search,
-                               q=query)
+        cursor = tweepy.Cursor(self.parser.twitter_api.search,
+                               q=query,
+                               tweet_mode="extended",
+                               lang=lang)
 
-        for tweet in cursor.items(count):
+        tweets_sentiments = []
+
+        for tweet in tqdm(cursor.items(count)):
             try:
                 text = tweet.retweeted_status.full_text
             except AttributeError:  # Not a Retweet
@@ -66,7 +74,7 @@ class TweetsAnalyzer:
             testimonial = TextBlob(text)
             tweet_dict["BLOB_polarity"] = testimonial.sentiment.polarity
 
-            preds = self.sa_model.predict(tweet)
+            preds = self.sa_model.predict(text)
             pred = (preds > THRESH).byte().numpy()[0]
 
             if all(pred == np.array([0, 0])):
@@ -78,9 +86,8 @@ class TweetsAnalyzer:
 
             tweet_dict["BERT_sentiment"] = sentiment
             tweet_dict["BERT_sentiment_conf"] = preds.max().item()
-            tweet_dict["BERT_toxicity"] = self.tox_model.predict(tweet)
+            tweet_dict["BERT_toxicity"] = self.tox_model.predict(text)
 
+            tweets_sentiments.append(tweet_dict)
 
-
-
-
+        return pd.DataFrame(data=tweets_sentiments)
