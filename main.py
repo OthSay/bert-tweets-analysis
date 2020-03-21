@@ -30,6 +30,7 @@ def main(query, config_path, count, lang):
 
     print(df["BERT_sentiment"].value_counts())
 
+    print(df.head())
 
 if __name__ == '__main__':
     main()
