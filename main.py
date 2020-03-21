@@ -28,7 +28,7 @@ def main(query, config_path, count, lang):
                           count=count,
                           lang=lang)
 
-    print(df["BERT_sentiment"].value_counts())
+    print(df["sentiment"].value_counts())
 
     print(df.head())
 

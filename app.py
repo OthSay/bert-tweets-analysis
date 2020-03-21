@@ -7,11 +7,6 @@ config_path = "config.json"
 app = Flask(__name__)
 
 
-@app.route("/")
-def hello():
-    return render_template("index.html", message="Hello Flask!");
-
-
 @app.route('/twitter-analysis', methods=["GET", "POST"])
 def analyse_tweets():
     if request.method == "POST":
