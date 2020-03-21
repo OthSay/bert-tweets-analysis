@@ -62,7 +62,7 @@ Models used for tweets analysis can be found in `src/models`:
 
 ### Install requirements:
 ```
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 ### TODO : 
