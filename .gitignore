@@ -21,6 +21,7 @@ sdist/
 var/
 data/aclImdb/test
 data/aclImdb/train
+notebooks/
 wheels/
 pip-wheel-metadata/
 share/python-wheels/

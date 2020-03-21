@@ -33,7 +33,9 @@ Twitter parsing is done using [Tweepy]("https://github.com/tweepy/tweepy"), to i
 ```
 pip install tweepy
 ```
-TwitterParser module can be found in `src/twitter_parser/parser.py`. To get a list of last **_n_** tweets corresponding to a certain **_query_** : 
+TwitterParser module can be found in `src/twitter_parser/parser.py`. 
+
+To get a list of last **_n_** tweets corresponding to a certain **_query_** : 
 ```python
 import src.twitter_parser import TwitterParser
 
@@ -63,5 +65,11 @@ Models used for tweets analysis can be found in `src/models`:
 pip install requirements.txt
 ```
 
+### TODO : 
+- [ ] Optimize prediction phase.
+- [ ] Finalize API, and make a demo webpage. 
+- [ ] Detect tweet language automatically.
+- [ ] Finetune Camembert model for french sentiment analysis.
+- [ ] Add Named Entity Recognition model. 
 ---
 Othmane SAYEM
