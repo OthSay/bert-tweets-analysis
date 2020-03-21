@@ -32,5 +32,6 @@ def main(query, config_path, count, lang):
 
     print(df.head())
 
+
 if __name__ == '__main__':
     main()

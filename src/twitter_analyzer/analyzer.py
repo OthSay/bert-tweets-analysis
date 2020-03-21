@@ -9,8 +9,8 @@ from tqdm import tqdm
 from ..twitter_parser import TwitterParser
 from ..models import PTBertClassifier, MultiLabelClassifier
 
-DEFAULT_SA_MODEL_PATH = r"/Users/sayemothmane/ws/research/nlp/project_x/data/models/model.bin"
-DEFAULT_TOX_MODEL_PATH = r"/Users/sayemothmane/ws/research/nlp/project_x/data/models/model_toxicity_analysis.bin"
+DEFAULT_SA_MODEL_PATH = "data/models/model.bin"
+DEFAULT_TOX_MODEL_PATH = "data/models/model_toxicity_analysis.bin"
 THRESH = 0.9
 
 
@@ -39,13 +39,19 @@ class TweetsAnalyzer:
         else:
             self.tox_model_path = DEFAULT_TOX_MODEL_PATH
 
-        self.sa_model = PTBertClassifier(num_classes=2,
-                                         transf_model=torch.load(DEFAULT_SA_MODEL_PATH,
-                                                                 map_location=torch.device('cpu')))
+        try:
+            self.sa_model = PTBertClassifier(num_classes=2,
+                                             transf_model=torch.load(DEFAULT_SA_MODEL_PATH,
+                                                                     map_location=torch.device('cpu')))
+        except Exception:
+            self.sa_model = None
 
-        self.tox_model = MultiLabelClassifier(num_classes=6,
-                                              transf_model=torch.load(DEFAULT_TOX_MODEL_PATH,
-                                                                      map_location=torch.device('cpu')))
+        try:
+            self.tox_model = MultiLabelClassifier(num_classes=6,
+                                                  transf_model=torch.load(DEFAULT_TOX_MODEL_PATH,
+                                                                          map_location=torch.device('cpu')))
+        except Exception:
+            self.tox_model = None
 
     def analyze(self,
                 query,
@@ -72,21 +78,36 @@ class TweetsAnalyzer:
                           "rt_count": tweet.retweet_count}
 
             testimonial = TextBlob(text)
-            tweet_dict["BLOB_polarity"] = testimonial.sentiment.polarity
 
-            preds = self.sa_model.predict(text)
-            pred = (preds > THRESH).byte().numpy()[0]
+            if self.sa_model is not None:
+                preds = self.sa_model.predict(text)
+                pred = (preds > THRESH).byte().numpy()[0]
 
-            if all(pred == np.array([0, 0])):
-                sentiment = "neutral"
-            elif all(pred == np.array([1, 0])):
-                sentiment = "positive"
+                if all(pred == np.array([0, 0])):
+                    sentiment = "neutral"
+                elif all(pred == np.array([1, 0])):
+                    sentiment = "positive"
+                else:
+                    sentiment = "negative"
+
+                # weet_dict["BLOB_polarity"] = testimonial.sentiment.polarity
+                tweet_dict["sentiment"] = sentiment
+                tweet_dict["BERT_sentiment_conf"] = preds.max().item()
+
             else:
-                sentiment = "negative"
+                # Only take BLOB polarity
+                polarity = testimonial.sentiment.polarity
+                if polarity >= 0.6:
+                    sentiment = "positive"
+                elif polarity <= -0.5:
+                    sentiment = "negative"
+                else:
+                    sentiment = "neutral"
 
-            tweet_dict["BERT_sentiment"] = sentiment
-            tweet_dict["BERT_sentiment_conf"] = preds.max().item()
-            tweet_dict["BERT_toxicity"] = self.tox_model.predict(text)
+                tweet_dict["sentiment"] = sentiment
+
+            if self.tox_model is not None:
+                tweet_dict["BERT_toxicity"] = self.tox_model.predict(text)
 
             tweets_sentiments.append(tweet_dict)
 
