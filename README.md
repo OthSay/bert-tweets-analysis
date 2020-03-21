@@ -5,8 +5,8 @@ For a given query, this package extracts the last 1000 related tweets (or more) 
 
 Models trained on following dataset:
  
--   IMDB Movie review database : pretrained model here. 
--   Toxic comments JigSAW competition : pretrained model here. 
+-   IMDB Movie review database : pretrained model [here](https://drive.google.com/file/d/1mD4SEniTFVuf8mM48GlGn_ofYV3ylP4o/view?usp=sharing "PyTorch BERT weights for IMDB"). 
+-   Toxic comments JigSAW competition : pretrained model [here](https://drive.google.com/file/d/1W3HQBYsjCpgumFIXiGHuHW1cXQ38nC-w/view?usp=sharing "MultiLabel PyTorch BERT weights for IMDB"). 
 -   Sentiment140 dataset with 1.6 million tweets (https://www.kaggle.com/kazanova/sentiment140)
 
 ## Install requirements:
