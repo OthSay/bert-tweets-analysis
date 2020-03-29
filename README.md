@@ -70,6 +70,7 @@ pip install -r requirements.txt
 - [ ] Finalize API, and make a demo webpage. 
 - [ ] Detect tweet language automatically.
 - [ ] Finetune Camembert model for french sentiment analysis.
-- [ ] Add Named Entity Recognition model. 
+- [ ] Add Named Entity Recognition model.
+- [ ] Add sentiment Discovery (by [NVIDIA](https://github.com/NVIDIA/sentiment-discovery))
 ---
 Othmane SAYEM
