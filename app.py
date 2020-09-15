@@ -18,7 +18,7 @@ def analyse_tweets():
     query = request.args["query"]
 
     if "count" in request.args:
-        count = int(request.args("count"))
+        count = int(request.args["count"])
     else:
         count = 10
 
