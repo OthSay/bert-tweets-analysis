@@ -2,7 +2,7 @@ import json
 from src.twitter_analyzer import TweetsAnalyzer
 from flask import Flask, jsonify, request, render_template
 
-config_path = "temp/config.json"
+config_path = r"C:\Users\sayeoth\ws\research\perso\bert-tweets-analysis\config_template.json"
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -10,13 +10,14 @@ app.config["DEBUG"] = True
 
 @app.route('/', methods=['GET'])
 def home():
-    return "<h1>Home to BERT Tweet analysis</h1><p>This site is a prototype API for sentiment analysis.</p>"
+    return render_template("index.html")
 
 
-@app.route('/twitter-analysis', methods=["GET"])
+@app.route('/predict', methods=["GET", "POST"])
 def analyse_tweets():
-    query = request.args["query"]
-
+    query = request.form.get("queryname")
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+    print(query)
     if "count" in request.args:
         count = int(request.args["count"])
     else:
