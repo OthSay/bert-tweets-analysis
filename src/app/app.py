@@ -1,8 +1,8 @@
 import json
 from src.twitter_analyzer import TweetsAnalyzer
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, flash, request, render_template, redirect, url_for
 
-config_path = r"C:\Users\sayeoth\ws\research\perso\bert-tweets-analysis\config_template.json"
+config_path = "/Users/sayemothmane/ws/research/nlp/project_x/temp/config.json"
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -14,22 +14,20 @@ def home():
 
 
 @app.route('/predict', methods=["GET", "POST"])
-def analyse_tweets():
-    query = request.form.get("queryname")
-    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    print(query)
-    if "count" in request.args:
-        count = int(request.args["count"])
-    else:
-        count = 10
+def predict():
+    if request.method == "POST":
+        query = request.form["queryname"]
+        count = request.form["hist"]
 
-    conf = json.load(open(config_path, "r"))
+        conf = json.load(open(config_path, "r"))
 
-    analyzer = TweetsAnalyzer(config=conf)
-    df = analyzer.analyze(query=query,
-                          count=count)
+        analyzer = TweetsAnalyzer(config=conf)
+        df = analyzer.analyze(query=query,
+                              count=count)
 
-    return str(df["sentiment"].value_counts())
+        return str(df["sentiment"].value_counts())
+
+    return render_template("index.html")
 
 
 if __name__ == '__main__':
