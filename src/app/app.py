@@ -2,7 +2,7 @@ import json
 from src.twitter_analyzer import TweetsAnalyzer
 from flask import Flask, flash, request, render_template, redirect, url_for
 
-config_path = "/Users/sayemothmane/ws/research/nlp/project_x/temp/config.json"
+config_path = r"C:\Users\sayeoth\ws\research\perso\bert-tweets-analysis\config_template.json"
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -15,19 +15,19 @@ def home():
 
 @app.route('/predict', methods=["GET", "POST"])
 def predict():
-    if request.method == "POST":
-        query = request.form["queryname"]
-        count = request.form["hist"]
+    query = request.json["query"]
+    count = request.json["history"]
 
-        conf = json.load(open(config_path, "r"))
+    conf = json.load(open(config_path, "r"))
 
-        analyzer = TweetsAnalyzer(config=conf)
-        df = analyzer.analyze(query=query,
-                              count=count)
+    analyzer = TweetsAnalyzer(config=conf)
+    df = analyzer.analyze(query=query,
+                          count=count)
 
-        return str(df["sentiment"].value_counts())
+    res = {"summary": str(df["sentiment"].value_counts()),
+           "negative_tweets": list(df[df["sentiment"] == "negative"]["tweet"].values)}
 
-    return render_template("index.html")
+    return res
 
 
 if __name__ == '__main__':
