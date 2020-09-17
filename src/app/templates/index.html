@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
     <title>Home to BERT Tweet analysis"</title>
 </head>
 <body>
 <h2>This site is a prototype API for sentiment analysis.</h2>
 <form method="post">
-  <label for="queryname">QUERY:</label><br>
-  <input type="text" id="queryname" name="queryname" value="{{request.form.queryname}}"><br>
+  <label for="queryname">Query:</label><br>
+  <input type="text" id="queryname" name="queryname" value="{{request.json.query}"><br>
   <label for="hist">History:</label><br>
-  <input type="text" id="hist" name="hist" value="{{request.form.hist}}">
+  <input type="text" id="hist" name="hist" value="{{request.json.history}}">
 </form>
 
 <h1><a href="/predict"> Predict !! </a></h1>

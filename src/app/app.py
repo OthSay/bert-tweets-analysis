@@ -1,8 +1,8 @@
 import json
 from src.twitter_analyzer import TweetsAnalyzer
-from flask import Flask, flash, request, render_template, redirect, url_for
+from flask import Flask, flash, request, render_template, redirect, url_for, jsonify
 
-config_path = r"C:\Users\sayeoth\ws\research\perso\bert-tweets-analysis\config_template.json"
+config_path = "/Users/sayemothmane/ws/research/nlp/project_x/temp/config.json"
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -27,7 +27,7 @@ def predict():
     res = {"summary": str(df["sentiment"].value_counts()),
            "negative_tweets": list(df[df["sentiment"] == "negative"]["tweet"].values)}
 
-    return res
+    return jsonify(res)
 
 
 if __name__ == '__main__':
