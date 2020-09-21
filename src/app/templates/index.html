@@ -6,14 +6,16 @@
     <title>Home to BERT Tweet analysis"</title>
 </head>
 <body>
-<h2>This site is a prototype API for sentiment analysis.</h2>
-<form method="post">
-  <label for="queryname">Query:</label><br>
-  <input type="text" id="queryname" name="queryname" value="{{request.json.query}"><br>
-  <label for="hist">History:</label><br>
-  <input type="text" id="hist" name="hist" value="{{request.json.history}}">
+<h2>Prototype API for sentiment analysis.</h2>
+<form method="POST" action="">
+  <label for="queryname">Query:</label>
+  <input type="text" id="queryname" name="queryname" value="{{request.form.queryname}}">
+  <label for="hist">History:</label>
+  <input type="text" id="hist" name="hist" value="{{request.form.hist}}">
+    <input type="submit" value="Predict">
 </form>
-
-<h1><a href="/predict"> Predict !! </a></h1>
+<div class="results">
+    <pre>{{ response }}</pre>
+</div>
 </body>
 </html>

@@ -1,11 +1,13 @@
+import os
 import json
 from src.twitter_analyzer import TweetsAnalyzer
 from flask import Flask, flash, request, render_template, redirect, url_for, jsonify
 
-config_path = "/Users/sayemothmane/ws/research/nlp/project_x/temp/config.json"
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
+
+CONFIG_PATH = os.getenv("CONFIG_PATH")
 
 
 @app.route('/', methods=['GET'])
@@ -15,19 +17,26 @@ def home():
 
 @app.route('/predict', methods=["GET", "POST"])
 def predict():
-    query = request.json["query"]
-    count = request.json["history"]
+    if request.method == "POST":
+        query = request.form["queryname"]
+        count = int(request.form["hist"])
 
-    conf = json.load(open(config_path, "r"))
+        conf = json.load(open(CONFIG_PATH, "r"))
 
-    analyzer = TweetsAnalyzer(config=conf)
-    df = analyzer.analyze(query=query,
-                          count=count)
+        analyzer = TweetsAnalyzer(config=conf)
+        df = analyzer.analyze(query=query,
+                              count=count)
 
-    res = {"summary": str(df["sentiment"].value_counts()),
-           "negative_tweets": list(df[df["sentiment"] == "negative"]["tweet"].values)}
+        res={}
+        for sentiment in df["sentiment"].value_counts().keys():
+            res[sentiment] = {}
+            res[sentiment]["number of tweets"] = str(df["sentiment"].value_counts()[sentiment])
+            res[sentiment]["list of tweets"] = list(df[df["sentiment"] == sentiment]["tweet"].values)
 
-    return jsonify(res)
+        response = json.dumps(res, sort_keys=False, indent=2)
+    else:
+        response = "Type a query and a history number of tweets."
+    return render_template("index.html", response=response)
 
 
 if __name__ == '__main__':
