@@ -75,7 +75,7 @@ class TweetsAnalyzer:
                           "rt_count": tweet.retweet_count}
             tweets.append(tweet_dict)
 
-        zreturn pd.DataFrame(data=tweets)
+        return pd.DataFrame(data=tweets)
 
     def analyze(self,
                 query,
