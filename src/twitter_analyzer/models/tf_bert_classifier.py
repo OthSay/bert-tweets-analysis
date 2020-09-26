@@ -1,6 +1,4 @@
-import os
 import tensorflow as tf
-
 from transformers.modeling_tf_bert import TFBertForSequenceClassification
 from transformers.data.processors.utils import SingleSentenceClassificationProcessor
 from transformers.tokenization_bert import BertTokenizer

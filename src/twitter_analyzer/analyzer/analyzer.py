@@ -2,12 +2,11 @@ import os
 import torch
 import tweepy
 import pandas as pd
-import numpy as np
 from textblob import TextBlob
 from tqdm import tqdm
 
-from ..twitter_parser import TwitterParser
-from ..models import PTBertClassifier, MultiLabelClassifier
+from twitter_analyzer.twitter_parser import TwitterParser
+from twitter_analyzer.models import PTBertClassifier, MultiLabelClassifier
 
 DEFAULT_SA_MODEL_PATH = "data/models/model.bin"
 DEFAULT_TOX_MODEL_PATH = "data/models/model_toxicity_analysis.bin"

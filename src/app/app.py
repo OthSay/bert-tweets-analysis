@@ -1,7 +1,7 @@
 import os
 import json
-from src.twitter_analyzer import TweetsAnalyzer
-from flask import Flask, flash, request, render_template, redirect, url_for, jsonify
+from twitter_analyzer import TweetsAnalyzer
+from flask import Flask, request, render_template
 
 app = Flask(__name__)
 app.config["DEBUG"] = True

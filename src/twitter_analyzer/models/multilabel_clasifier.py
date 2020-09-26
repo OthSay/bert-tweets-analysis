@@ -7,7 +7,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 from torch import tensor
 
-from ..data import MultiLabelClassificationProcessor
+from twitter_analyzer.data import MultiLabelClassificationProcessor
 
 
 def accuracy_thresh(y_pred, y_true, thresh: float = 0.5, sigmoid: bool = True):
