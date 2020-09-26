@@ -128,3 +128,22 @@ class PTBertClassifier:
         prediction = self.model(feature['input_ids'], feature['attention_mask'])[
             0].detach().cpu()
         return F.softmax(prediction)
+
+    def predict_sentiment(self, text, thresh=0.6):
+        feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
+        prediction = self.model(feature['input_ids'], feature['attention_mask'])[
+            0].detach().cpu()
+        preds = F.softmax(prediction)
+
+        pred = (preds > thresh).byte().numpy()[0]
+
+        if all(pred == np.array([0, 0])):
+            sentiment = "neutral"
+        elif all(pred == np.array([1, 0])):
+            sentiment = "positive"
+        else:
+            sentiment = "negative"
+
+        conf = preds.max().item()
+
+        return sentiment, conf

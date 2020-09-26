@@ -53,6 +53,30 @@ class TweetsAnalyzer:
         except Exception:
             self.tox_model = None
 
+    def get_tweets(self, query, count=500, lang="en"):
+
+        tweets = []
+
+        query += " -filter:retweets"
+        cursor = tweepy.Cursor(self.parser.twitter_api.search,
+                               q=query,
+                               tweet_mode="extended",
+                               lang=lang)
+
+        for tweet in tqdm(cursor.items(count)):
+            try:
+                text = tweet.retweeted_status.full_text
+            except AttributeError:  # Not a Retweet
+                text = tweet.full_text
+
+            tweet_dict = {"tweet": text,
+                          "location": tweet.user.location,
+                          "fav_count": tweet.favorite_count,
+                          "rt_count": tweet.retweet_count}
+            tweets.append(tweet_dict)
+
+        zreturn pd.DataFrame(data=tweets)
+
     def analyze(self,
                 query,
                 count=500,
@@ -77,24 +101,14 @@ class TweetsAnalyzer:
                           "fav_count": tweet.favorite_count,
                           "rt_count": tweet.retweet_count}
 
-            testimonial = TextBlob(text)
-
             if self.sa_model is not None:
-                preds = self.sa_model.predict(text)
-                pred = (preds > THRESH).byte().numpy()[0]
+                sentiment, confidence = self.sa_model.predict_sentiment(text, thresh=THRESH)
 
-                if all(pred == np.array([0, 0])):
-                    sentiment = "neutral"
-                elif all(pred == np.array([1, 0])):
-                    sentiment = "positive"
-                else:
-                    sentiment = "negative"
-
-                # weet_dict["BLOB_polarity"] = testimonial.sentiment.polarity
                 tweet_dict["sentiment"] = sentiment
-                tweet_dict["BERT_sentiment_conf"] = preds.max().item()
+                tweet_dict["BERT_sentiment_conf"] = confidence
 
             else:
+                testimonial = TextBlob(text)
                 # Only take BLOB polarity
                 polarity = testimonial.sentiment.polarity
                 if polarity >= 0.6:
