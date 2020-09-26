@@ -29,25 +29,25 @@ class TweetsAnalyzer:
                                     access_token_secret=self.access_token_secret)
 
         if os.path.isfile(config["models"]["sentiment-analysis"]["pretrained_model"]):
-            self.sa_model_path = config["models"]["sentiment-analysis"]
+            self.sa_model_path = config["models"]["sentiment-analysis"]["pretrained_model"]
         else:
             self.sa_model_path = DEFAULT_SA_MODEL_PATH
 
         if os.path.isfile(config["models"]["toxicity-analysis"]["pretrained_model"]):
-            self.tox_model_path = config["models"]["toxicity-analysis"]
+            self.tox_model_path = config["models"]["toxicity-analysis"]["pretrained_model"]
         else:
             self.tox_model_path = DEFAULT_TOX_MODEL_PATH
 
         try:
             self.sa_model = PTBertClassifier(num_classes=2,
-                                             transf_model=torch.load(DEFAULT_SA_MODEL_PATH,
+                                             transf_model=torch.load(self.sa_model_path,
                                                                      map_location=torch.device('cpu')))
         except Exception:
             self.sa_model = None
 
         try:
             self.tox_model = MultiLabelClassifier(num_classes=6,
-                                                  transf_model=torch.load(DEFAULT_TOX_MODEL_PATH,
+                                                  transf_model=torch.load(self.tox_model_path,
                                                                           map_location=torch.device('cpu')))
         except Exception:
             self.tox_model = None
