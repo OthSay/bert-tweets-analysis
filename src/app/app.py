@@ -1,8 +1,7 @@
 import os
 import json
-from src.twitter_analyzer import TweetsAnalyzer
-from flask import Flask, flash, request, render_template, redirect, url_for, jsonify
-
+from twitter_analyzer import TweetsAnalyzer
+from flask import Flask, request, render_template
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -10,12 +9,7 @@ app.config["DEBUG"] = True
 CONFIG_PATH = os.getenv("CONFIG_PATH")
 
 
-@app.route('/', methods=['GET'])
-def home():
-    return render_template("index.html")
-
-
-@app.route('/predict', methods=["GET", "POST"])
+@app.route('/', methods=["GET", "POST"])
 def predict():
     if request.method == "POST":
         query = request.form["queryname"]
@@ -27,7 +21,7 @@ def predict():
         df = analyzer.analyze(query=query,
                               count=count)
 
-        res={}
+        res = {}
         for sentiment in df["sentiment"].value_counts().keys():
             res[sentiment] = {}
             res[sentiment]["number of tweets"] = str(df["sentiment"].value_counts()[sentiment])

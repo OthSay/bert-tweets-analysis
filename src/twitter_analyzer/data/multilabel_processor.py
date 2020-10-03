@@ -1,9 +1,8 @@
-import tensorflow as tf
 import torch
+import logging
+import tensorflow as tf
 from transformers.data.processors import DataProcessor, InputFeatures, InputExample
 from torch.utils.data import TensorDataset
-import pandas as pd
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +140,7 @@ class MultiLabelClassificationProcessor(DataProcessor):
             If the ``examples`` input is a ``tf.data.Dataset``, will return a ``tf.data.Dataset``
             containing the task-specific features. If the input is a list of ``InputExamples``, will return
             a list of task-specific ``InputFeatures`` which can be fed to the model.
+            :param mask_padding_with_zero:
             :param return_tensors:
 
         """

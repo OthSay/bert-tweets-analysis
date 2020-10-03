@@ -1,30 +1,22 @@
-from sklearn.model_selection import train_test_split
+import os
 import torch
-from transformers import *
 import numpy as np
-import torch.optim as optim
 from tqdm import tqdm
-from torch.utils.data import DataLoader, TensorDataset
-from torch import tensor
 
-from ..data import MultiLabelClassificationProcessor
-
-
-def accuracy_thresh(y_pred, y_true, thresh: float = 0.5, sigmoid: bool = True):
-    "Compute accuracy when `y_pred` and `y_true` are the same size."
-    if sigmoid: y_pred = y_pred.sigmoid()
-    return np.mean(np.mean(((y_pred > thresh) == y_true.byte()).float().cpu().numpy(), axis=1))
+from sklearn.model_selection import train_test_split
+import torch.nn.functional as F
+from transformers import *
+import torch.optim as optim
+from sklearn.metrics import accuracy_score, f1_score
 
 
-label_map = {0: 'toxic',
-             1: 'severe_toxic',
-             2: 'obscene',
-             3: 'threat',
-             4: 'insult',
-             5: 'identity_hate'}
+def metric(y_true, y_pred):
+    acc = accuracy_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred, average='macro')
+    return acc, f1
 
 
-class MultiLabelClassifier:
+class PTBertClassifier:
 
     def __init__(self,
                  num_classes,
@@ -38,7 +30,7 @@ class MultiLabelClassifier:
     def get_features(self,
                      x,
                      y):
-        processor = MultiLabelClassificationProcessor(mode="multilabel_classification")
+        processor = SingleSentenceClassificationProcessor()
         processor.add_examples(texts_or_text_and_labels=x,
                                labels=y)
 
@@ -53,7 +45,7 @@ class MultiLabelClassifier:
             lr=3e-5,
             batch_size=8,
             val_split=0.7,
-            model_save_path="weights_imdb.{epoch:02d}.hdf5"
+            model_save_path=None,
             ):
 
         x_train, x_valid, y_train, y_valid = train_test_split(x,
@@ -63,24 +55,23 @@ class MultiLabelClassifier:
         train_features = self.get_features(x=x_train, y=y_train)
         valid_features = self.get_features(x=x_valid, y=y_valid)
 
-        train_input_ids = tensor(np.array(train_features[:][0]))
-        train_input_mask = tensor(np.array(train_features[:][1]))
-        train_label = tensor(np.array(train_features[:][2]))
+        train_input_ids = torch.tensor(np.array(train_features[:][0]))
+        train_input_mask = torch.tensor(np.array(train_features[:][1]))
+        train_label = torch.tensor(np.array(train_features[:][2]))
 
-        valid_input_ids = tensor(np.array(valid_features[:][0]))
-        valid_input_mask = tensor(np.array(valid_features[:][1]))
-        valid_label = tensor(np.array(valid_features[:][2]))
+        valid_input_ids = torch.tensor(np.array(valid_features[:][0]))
+        valid_input_mask = torch.tensor(np.array(valid_features[:][1]))
+        valid_label = torch.tensor(np.array(valid_features[:][2]))
 
-        train = TensorDataset(train_input_ids, train_input_mask, train_label)
-        valid = TensorDataset(valid_input_ids, valid_input_mask, valid_label)
+        train = torch.utils.data.TensorDataset(train_input_ids, train_input_mask, train_label)
+        valid = torch.utils.data.TensorDataset(valid_input_ids, valid_input_mask, valid_label)
 
-        train_loader = DataLoader(train, batch_size=batch_size, shuffle=True)
-        valid_loader = DataLoader(valid, batch_size=batch_size, shuffle=False)
+        train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=True)
+        valid_loader = torch.utils.data.DataLoader(valid, batch_size=batch_size, shuffle=False)
 
-        loss_fn = torch.nn.BCEWithLogitsLoss()
-        self.model.cuda()
-        optimizer = optim.Adam(params=self.model.parameters(), lr=lr)
-        self.model.train()
+        loss_fn = torch.nn.CrossEntropyLoss()
+        optimizer = optim.Adam(params=self.model.parameters(),
+                               lr=lr)
 
         self.model.cuda()
         self.model.train()
@@ -94,8 +85,7 @@ class MultiLabelClassifier:
                 x_ids, x_masks, y_truth = batch
 
                 y_pred = self.model(x_ids, x_masks)
-                logits = y_pred[0]
-                loss = loss_fn(logits, y_truth)
+                loss = loss_fn(y_pred[0], y_truth)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -121,22 +111,39 @@ class MultiLabelClassifier:
                         preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                         truths = np.append(truths, y_truth.detach().cpu().numpy(), axis=0)
 
-            acc = accuracy_thresh(tensor(preds), tensor(truths))
+            preds = np.argmax(preds, axis=1)
+            acc, f1 = metric(preds, truths)
 
             print(
-                'epoch: %d, train loss: %.8f, valid loss: %.8f, acc: %.8f\n' %
-                (e, train_loss, val_loss, acc[0]))
+                'epoch: %d, train loss: %.8f, valid loss: %.8f, acc: %.8f, f1: %.8f\n' %
+                (e, train_loss, val_loss, acc, f1))
 
             torch.cuda.empty_cache()
 
-        torch.save(self.model, model_save_path)
+        if model_save_path is not None:
+            torch.save(self.model, os.path.join(model_save_path, "model.bin"))
 
-    def predict(self, text, thresh=0.5):
-
+    def predict(self, text):
         feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
-        prediction = self.model(feature['input_ids'], feature['attention_mask'])[0].detach().cpu().sigmoid()
+        prediction = self.model(feature['input_ids'], feature['attention_mask'])[
+            0].detach().cpu()
+        return F.softmax(prediction)
 
-        preds = (prediction > thresh).byte().numpy()
-        pred_idx = np.where(preds[0] == 1)[0]
+    def predict_sentiment(self, text, thresh=0.6):
+        feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
+        prediction = self.model(feature['input_ids'], feature['attention_mask'])[
+            0].detach().cpu()
+        preds = F.softmax(prediction)
 
-        return [label_map[idx] for idx in pred_idx]
+        pred = (preds > thresh).byte().numpy()[0]
+
+        if all(pred == np.array([0, 0])):
+            sentiment = "neutral"
+        elif all(pred == np.array([1, 0])):
+            sentiment = "positive"
+        else:
+            sentiment = "negative"
+
+        conf = preds.max().item()
+
+        return sentiment, conf

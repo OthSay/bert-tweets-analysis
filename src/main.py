@@ -1,6 +1,6 @@
 import click
 import json
-from src.twitter_analyzer import TweetsAnalyzer
+from twitter_analyzer import TweetsAnalyzer
 
 
 @click.command()
@@ -29,7 +29,6 @@ def main(query, config_path, count, lang):
                           lang=lang)
 
     print(df["sentiment"].value_counts())
-
     print(df.head())
 
 
