@@ -6,7 +6,7 @@ For a given query, this package extracts the last 1000 related tweets (or more) 
 
 ## Steps to run a first tweets analysis:
 
--   Download pretrained models, if you want BERT based analysis. Otherwise, sentiment analysis will be made with TextBlob.
+-   Download pretrained models, if you want BERT based analysis. Otherwise, sentiment analysis will be made with Transfomers sentiment analysis pipeline.
 -   Apply for a Twitter Developper Account ([here](https://www.extly.com/docs/autotweetng_joocial/tutorials/how-to-auto-post-from-joomla-to-twitter/apply-for-a-twitter-developer-account/#apply-for-a-developer-account "Twitter developer account") is a tutorial to help you).
 -   Create your config json, similar to `config_template.json`, then fill it with your API and access tokens.
 -   Run :
