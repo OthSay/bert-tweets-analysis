@@ -2,7 +2,7 @@ import os
 import torch
 import tweepy
 import pandas as pd
-from textblob import TextBlob
+from transformers import pipeline
 from tqdm import tqdm
 
 from twitter_analyzer.twitter_parser import TwitterParser
@@ -88,6 +88,7 @@ class TweetsAnalyzer:
                                lang=lang)
 
         tweets_sentiments = []
+        classifier = pipeline("sentiment-analysis")
 
         for tweet in tqdm(cursor.items(count)):
             try:
@@ -107,16 +108,7 @@ class TweetsAnalyzer:
                 tweet_dict["BERT_sentiment_conf"] = confidence
 
             else:
-                testimonial = TextBlob(text)
-                # Only take BLOB polarity
-                polarity = testimonial.sentiment.polarity
-                if polarity >= 0.6:
-                    sentiment = "positive"
-                elif polarity <= -0.5:
-                    sentiment = "negative"
-                else:
-                    sentiment = "neutral"
-
+                sentiment = classifier(text)[0]["label"]
                 tweet_dict["sentiment"] = sentiment
 
             if self.tox_model is not None:
