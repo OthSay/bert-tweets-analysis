@@ -1,6 +1,5 @@
 import torch
 import logging
-import tensorflow as tf
 from transformers.data.processors import DataProcessor, InputFeatures, InputExample
 from torch.utils.data import TensorDataset
 
@@ -207,6 +206,7 @@ class MultiLabelClassificationProcessor(DataProcessor):
         if return_tensors is None:
             return features
         elif return_tensors == "tf":
+            import tensorflow as tf
             def gen():
                 for ex in features:
                     yield ({"input_ids": ex.input_ids, "attention_mask": ex.attention_mask}, ex.label)

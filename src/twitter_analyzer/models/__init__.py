@@ -1,3 +1,2 @@
-from .pt_bert_classifier import PTBertClassifier
-from .tf_bert_classifier import TFBertClassifier
-from .multilabel_clasifier import MultiLabelClassifier
+from .sa_model import SAModel
+from .tox_model import ToxModel

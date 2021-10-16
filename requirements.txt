@@ -1,10 +1,13 @@
 flask==0.12.2
-transformers==2.4.1
 tweepy==3.8.0
-tensorflow==2.1.0
 torch==1.4.0
 torchvision==0.2.1
 numpy==1.17.4
 pandas==0.23.4
-scikit-learn==0.21.3
-transformers==2.4.1
+scikit-learn==1.0
+transformers==4.11.0
+wordcloud==1.8.1
+streamlit==0.88.0
+plotly==5.3.1
+matplotlib==3.4.3
+python-dotenv==0.19.0

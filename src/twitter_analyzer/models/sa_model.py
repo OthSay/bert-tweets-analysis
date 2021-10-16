@@ -1,12 +1,9 @@
 import os
-import torch
 import numpy as np
 from tqdm import tqdm
 
 from sklearn.model_selection import train_test_split
-import torch.nn.functional as F
-from transformers import *
-import torch.optim as optim
+from transformers import BertTokenizer, BertForSequenceClassification, SingleSentenceClassificationProcessor
 from sklearn.metrics import accuracy_score, f1_score
 
 
@@ -16,10 +13,10 @@ def metric(y_true, y_pred):
     return acc, f1
 
 
-class PTBertClassifier:
+class SAModel:
 
     def __init__(self,
-                 num_classes,
+                 num_classes=2,
                  tokenizer=BertTokenizer.from_pretrained("bert-base-uncased"),
                  transf_model=BertForSequenceClassification.from_pretrained("bert-base-uncased")
                  ):
@@ -47,6 +44,8 @@ class PTBertClassifier:
             val_split=0.7,
             model_save_path=None,
             ):
+        import torch
+        import torch.optim as optim
 
         x_train, x_valid, y_train, y_valid = train_test_split(x,
                                                               y,
@@ -124,12 +123,14 @@ class PTBertClassifier:
             torch.save(self.model, os.path.join(model_save_path, "model.bin"))
 
     def predict(self, text):
+        import torch.nn.functional as F
         feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
         prediction = self.model(feature['input_ids'], feature['attention_mask'])[
             0].detach().cpu()
         return F.softmax(prediction)
 
     def predict_sentiment(self, text, thresh=0.6):
+        import torch.nn.functional as F
         feature = self.tokenizer.encode_plus(text=text, add_special_tokens=True, return_tensors='pt', max_length=512)
         prediction = self.model(feature['input_ids'], feature['attention_mask'])[
             0].detach().cpu()

@@ -1,11 +1,7 @@
 from sklearn.model_selection import train_test_split
-import torch
-from transformers import *
+from transformers import BertTokenizer, BertForSequenceClassification
 import numpy as np
-import torch.optim as optim
 from tqdm import tqdm
-from torch.utils.data import DataLoader, TensorDataset
-from torch import tensor
 
 from twitter_analyzer.data import MultiLabelClassificationProcessor
 
@@ -24,10 +20,10 @@ label_map = {0: 'toxic',
              5: 'identity_hate'}
 
 
-class MultiLabelClassifier:
+class ToxModel:
 
     def __init__(self,
-                 num_classes,
+                 num_classes=len(label_map),
                  tokenizer=BertTokenizer.from_pretrained("bert-base-uncased"),
                  transf_model=BertForSequenceClassification.from_pretrained("bert-base-uncased")
                  ):
@@ -55,6 +51,10 @@ class MultiLabelClassifier:
             val_split=0.7,
             model_save_path="weights_imdb.{epoch:02d}.hdf5"
             ):
+        import torch
+        import torch.optim as optim
+        from torch.utils.data import DataLoader, TensorDataset
+        from torch import tensor
 
         x_train, x_valid, y_train, y_valid = train_test_split(x,
                                                               y,

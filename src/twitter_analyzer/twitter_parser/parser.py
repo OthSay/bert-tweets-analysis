@@ -1,20 +1,25 @@
 import tweepy
 import logging
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
+API_SECRET_KEY = os.getenv("API_SECRET_KEY")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 
 
 class TwitterParser:
 
-    def __init__(self,
-                 api_key,
-                 api_secret_key,
-                 access_token,
-                 access_token_secret):
+    def __init__(self):
 
         self.logger = logging.getLogger()
-        self.api_key = api_key
-        self.api_secret_key = api_secret_key
-        self.access_token = access_token
-        self.access_token_secret = access_token_secret
+        self.api_key = API_KEY
+        self.api_secret_key = API_SECRET_KEY
+        self.access_token = ACCESS_TOKEN
+        self.access_token_secret = ACCESS_TOKEN_SECRET
         self.twitter_api = self._create_api()
 
     def _create_api(self):
@@ -49,10 +54,14 @@ class TwitterParser:
                                lang=lang)
         tweets_list = []
         for tweet in cursor.items(count):
+            t = {"location": tweet.user.location,
+                 "fav_count": tweet.favorite_count,
+                 "rt_count": tweet.retweet_count}
             try:
-                tweets_list.append(tweet.retweeted_status.full_text)
+                t["text"] = tweet.retweeted_status.full_text
             except AttributeError:  # Not a Retweet
-                tweets_list.append(tweet.full_text)
+                t["text"] = tweet.full_text
+            tweets_list.append(t)
 
         return tweets_list
 
@@ -75,13 +84,18 @@ class TwitterParser:
         for tweet in cursor.items(count):
 
             if len(batch) < batch_size:
+                t = {"location": tweet.user.location,
+                     "fav_count": tweet.favorite_count,
+                     "rt_count": tweet.retweet_count}
                 try:
-                    batch.append(tweet.retweeted_status.full_text)
+                    t["text"] = tweet.retweeted_status.full_text
                 except AttributeError:  # Not a Retweet
-                    batch.append(tweet.full_text)
+                    t["text"] = tweet.full_text
+                batch.append(t)
+
             elif len(batch) == batch_size:
                 batch_y = batch
-                batch = 0
+                batch = []
                 yield batch_y
 
     def dump_tweets(self,

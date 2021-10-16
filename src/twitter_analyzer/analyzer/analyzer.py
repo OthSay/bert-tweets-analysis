@@ -2,54 +2,40 @@ import os
 import torch
 import tweepy
 import pandas as pd
-from transformers import pipeline
 from tqdm import tqdm
+from transformers import pipeline
+from dotenv import load_dotenv
 
 from twitter_analyzer.twitter_parser import TwitterParser
-from twitter_analyzer.models import PTBertClassifier, MultiLabelClassifier
+from twitter_analyzer.models import ToxModel, SAModel
 
-DEFAULT_SA_MODEL_PATH = "data/models/model.bin"
-DEFAULT_TOX_MODEL_PATH = "data/models/model_toxicity_analysis.bin"
-THRESH = 0.9
+load_dotenv()
+
+PRETRAINED_SA_MODEL = os.getenv("PRETRAINED_SA_MODEL")
+PRETRAINED_TOX_MODEL = os.getenv("PRETRAINED_TOX_MODEL")
+THRESH = os.getenv("PRETRAINED_TOX_MODEL")
 
 
 class TweetsAnalyzer:
 
-    def __init__(self,
-                 config):
+    def __init__(self):
+        self.parser = TwitterParser()
 
-        self.api_key = config["twitter"]["api_key"]
-        self.api_secret_key = config["twitter"]["api_secret_key"]
-        self.access_token = config["twitter"]["access_token"]
-        self.access_token_secret = config["twitter"]["access_token_secret"]
+        if os.path.isfile(PRETRAINED_SA_MODEL):
+            self.sa_model = SAModel(
+                transf_model=torch.load(PRETRAINED_SA_MODEL,
+                                        map_location=torch.device('cpu')))
+            self.sa_with_transformers = False
 
-        self.parser = TwitterParser(api_key=self.api_key,
-                                    api_secret_key=self.api_secret_key,
-                                    access_token=self.access_token,
-                                    access_token_secret=self.access_token_secret)
-
-        if os.path.isfile(config["models"]["sentiment-analysis"]["pretrained_model"]):
-            self.sa_model_path = config["models"]["sentiment-analysis"]["pretrained_model"]
         else:
-            self.sa_model_path = DEFAULT_SA_MODEL_PATH
+            self.sa_with_transformers = True
+            self.sa_model = pipeline("sentiment-analysis")
 
-        if os.path.isfile(config["models"]["toxicity-analysis"]["pretrained_model"]):
-            self.tox_model_path = config["models"]["toxicity-analysis"]["pretrained_model"]
+        if os.path.isfile(PRETRAINED_SA_MODEL):
+            self.tox_model = ToxModel(
+                transf_model=torch.load(PRETRAINED_TOX_MODEL,
+                                        map_location=torch.device('cpu')))
         else:
-            self.tox_model_path = DEFAULT_TOX_MODEL_PATH
-
-        try:
-            self.sa_model = PTBertClassifier(num_classes=2,
-                                             transf_model=torch.load(self.sa_model_path,
-                                                                     map_location=torch.device('cpu')))
-        except Exception:
-            self.sa_model = None
-
-        try:
-            self.tox_model = MultiLabelClassifier(num_classes=6,
-                                                  transf_model=torch.load(self.tox_model_path,
-                                                                          map_location=torch.device('cpu')))
-        except Exception:
             self.tox_model = None
 
     def get_tweets(self, query, count=500, lang="en"):
@@ -78,42 +64,34 @@ class TweetsAnalyzer:
 
     def analyze(self,
                 query,
-                count=500,
+                count=50,
                 lang="en"):
 
-        query += " -filter:retweets"
-        cursor = tweepy.Cursor(self.parser.twitter_api.search,
-                               q=query,
-                               tweet_mode="extended",
-                               lang=lang)
+        tweets = self.parser.get_tweets(query=query,
+                                        count=count,
+                                        lang=lang)
 
-        tweets_sentiments = []
-        classifier = pipeline("sentiment-analysis")
+        tweets_w_sentiments = []
 
-        for tweet in tqdm(cursor.items(count)):
-            try:
-                text = tweet.retweeted_status.full_text
-            except AttributeError:  # Not a Retweet
-                text = tweet.full_text
+        for tweet in tqdm(tweets):
 
-            tweet_dict = {"tweet": text,
-                          "location": tweet.user.location,
-                          "fav_count": tweet.favorite_count,
-                          "rt_count": tweet.retweet_count}
-
-            if self.sa_model is not None:
-                sentiment, confidence = self.sa_model.predict_sentiment(text, thresh=THRESH)
-
-                tweet_dict["sentiment"] = sentiment
-                tweet_dict["BERT_sentiment_conf"] = confidence
-
+            if not self.sa_with_transformers:
+                # TODO : prediction from batch for built-in sentiment models
+                label, score = self.sa_model.predict_sentiment(tweet["text"], thresh=THRESH)
+                tweet["sentiment"] = label
+                tweet["confidence"] = score
             else:
-                sentiment = classifier(text)[0]["label"]
-                tweet_dict["sentiment"] = sentiment
+                sent = self.sa_model(tweet["text"])[0]
+                tweet["sentiment"] = sent["label"]
+                tweet["confidence"] = sent["score"]
 
             if self.tox_model is not None:
-                tweet_dict["BERT_toxicity"] = self.tox_model.predict(text)
+                # TODO : prediction from batch for built-in toxicity models
+                for tweet in tweets:
+                    label, score = self.tox_model.predict_sentiment(tweet["text"], thresh=THRESH)
+                    tweet["sentiment"] = label
+                    tweet["confidence"] = score
 
-            tweets_sentiments.append(tweet_dict)
+            tweets_w_sentiments.append(tweet)
 
-        return pd.DataFrame(data=tweets_sentiments)
+        return pd.DataFrame(data=tweets_w_sentiments)
